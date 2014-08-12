@@ -41,7 +41,7 @@ __ http://www.scala-sbt.org/release/docs/Getting-Started/Directories.html
 build.sbt
 ^^^^^^^^^
 
-Now we need to create a ``build.sbt`` file in the root folder to tell sbt how we’re going to build our project, and what dependencies we’ll use. This will pull in the GeoTrellis library, `spray-router`__ to provide us with a DLS to define routes for a RESTful API, and `spray-can`__ to give us an HTTP server.
+Now we need to create a ``build.sbt`` file in the root folder to tell sbt how we’re going to build our project, and what dependencies we’ll use. This will pull in the GeoTrellis library; `spray-router`__ to provide us with a DSL to define routes for a RESTful API; and `spray-can`__ to give us an HTTP server.
 
 __ http://spray.io/documentation/1.2.0/spray-routing/
 __ http://spray.io/documentation/1.2.0/spray-can/
@@ -102,7 +102,7 @@ Finally we create ``src/main/scala/GeoTrellisService.scala`` where we will defin
     def rootRoute = pingRoute ~ pongRoute
   }
 
-What we create with Spray is an tree of objects, called `directives`__, that behaves much like a decision tree. When a request comes in it is handed to the root object, ``rootRoute`` , which decides whether its a partial match, pass it on, it's no match, reject and pass it to the next node on the same level, or it's a complete, generate a response. Routes are aggregated using the ``~`` operator as we see happening with ``rootRoute``. You can read more about this on the `spray documentation site`__.
+What we create with Spray is a tree of objects, called `directives`__, that behaves much like a decision tree. When a request comes in it is handed to the root object, ``rootRoute``, which will decide what to do with the request. If the request is a partial match, ``rootRoute`` will pass it on; if the request is not a match, it will reject it and pass it to the next node on the same level; or if the response is complete, ``rootRoute`` will generate a response. Routes are aggregated using the ``~`` operator as we see happening with ``rootRoute`` in the code above. You can read more about this on the `spray documentation site`__.
 
 __ http://spray.io/documentation/1.1-SNAPSHOT/spray-routing/key-concepts/directives/
 __ http://spray.io/documentation/1.2.0/spray-routing/key-concepts/routes/
@@ -115,9 +115,9 @@ Now we are able to verify that the service runs by using the ``run`` command in 
 Using GeoTrellis
 ----------------
 
-Now we are ready to start using GeoTrellis. When we use GeoTrellis we are building objects that know how to perform Operation(s) and in what order. However the work is delayed until either ``.run`` or ``.get`` is called. 
+Now we are ready to start using GeoTrellis. When we use GeoTrellis we are building objects that know how to perform Operation(s) and in what order. However, the actual work of performing these Operation(s) is delayed until either ``.run`` or ``.get`` is called. 
 
-Lets look at some code. First we'll need these imports for the rest of the tutorial:
+Let's look at some code. First, we'll need these imports for the rest of the tutorial:
 
 .. includecode:: code/GeoTrellisService.scala
   :snippet: Imports
@@ -126,19 +126,19 @@ Lets look at some code. First we'll need these imports for the rest of the tutor
 Draw a Raster
 ^^^^^^^^^^^^^
 
-Lets make an endpoint that will load a raster of a given name and render it to PNG. Note that ``pathPrefix`` directive wraps an anonymous function that will receive a URL segment when a request comes in and will know how to ``complete{ }`` it. 
+Let's make an endpoint that will load a raster of a given name and render it to PNG. Note that ``pathPrefix`` directive wraps an anonymous function that will receive a URL segment when a request comes in and will know how to ``complete{ }`` it. 
 
 .. includecode:: code/GeoTrellisService.scala
   :snippet: RasterRoute
 
-:ref:`RasterSource` is an object that represents the result of an operation that loads a raster with ID of "RASTER_NAME" from the catalog in the future. We are able to transform the result of this operation by using the methods defined on ``RasterSource``, such as ``.renderPng()``, ``localMap``, etc.  Note that ``.renderPng(_)`` transforms a ``RasterSource`` into a ``ValueSource``, essentially reducing a future collection of values, a raster, into a single one value, PNG file. We will see shortly that two RasterSources can be combined with ``*`` operation.
+:ref:`RasterSource` is an object that represents the result of an operation that loads a raster with ID of "RASTER_NAME" from the catalog in the future. We are able to transform the result of this operation by using the methods defined on ``RasterSource``, such as ``.renderPng()``, ``localMap``, etc.  Note that ``.renderPng(_)`` transforms a ``RasterSource`` into a ``ValueSource``, essentially reducing a future collection of values, a raster, into a single one value, a PNG file. We will see shortly that two RasterSources can be combined with the ``*`` operation.
 
 RasterSource is a type of :ref:`DataSource`. This architecture is new as of ``0.9``. 
 
 
 GeoTrellis Server
 ^^^^^^^^^^^^^^^^^
-Once we call ``png.run`` we hand off the Operation structure we built to GeoTrellis server for evaluation. Lets take a look at the definition of ``.run(_)``: 
+Once we call ``png.run`` we hand off the Operation structure we built to GeoTrellis server for evaluation. Let's take a look at the definition of ``.run(_)``: 
 
 .. code-block:: scala
 
@@ -154,7 +154,7 @@ The implicit parameter is the GeoTrellis server instance that was imported from 
   }
 
 Being an implicit value it is automatically provided to all calls to ``.run`` and being lazy it is not initialized until the first call. 
-We are returned an ``OperationResult`` that can either be ``Ceomplete`` or ``Error``, we should pattern match on the result to handle either outcomes. Either way we are given a history of execution. This is what it looks like on an ``Error``:
+We are returned an ``OperationResult`` that can either be ``Complete`` or ``Error``. We should pattern match on the result to handle either outcome. Either way, we are given a history of execution. This is what it looks like on an ``Error``:
 
 .. code-block:: console
 
@@ -208,7 +208,7 @@ Now that we have the data and the catalog defined we can finally test the servic
 
   val rootRoute = pingRoute ~ pongRoute ~ rasterRoute
   
-... and restart the server. Lets see:
+... and restart the server. Let's see:
 
 ``http://localhost:8000/raster/SBN_inc_percap/draw``
 
@@ -258,7 +258,7 @@ One may wonder if perhaps the location of farmers markets are somehow correlated
 Average Income
 ^^^^^^^^^^^^^^
 
-What is the average income of the Philadelphia area. 
+What is the average income of the Philadelphia area? 
 
 .. code-block:: scala
 
@@ -305,11 +305,11 @@ Also important to note is that we have created a new RasterSource, `filteredInco
 Why?
 ^^^^
 
-The perhaps surprising result is that the difference in mean income is minor and if anything the proximity to farmers market to inversely related income per capita. Lets draw the ``filteredIncomeRaster`` raster to see why:
+The perhaps surprising result is that the difference in mean income is minor. If anything, proximity to a farmers market is inversely related to income per capita. Lets draw the ``filteredIncomeRaster`` raster to see why:
 
 .. image:: images/filtered.png
 
-Its a little difficult to tell without an overlay but it's apparent that the city of Philadelphia has a ready access to farmers markets but on average is lower income. 
+It's a little difficult to tell without an overlay, but it's apparent that the City of Philadelphia has a ready access to farmers markets but on average is lower income. 
 
 Analyze Route
 ^^^^^^^^^^^^^
@@ -319,7 +319,7 @@ Here is how we can wrap this functionality in a Spray route:
 .. includecode:: code/GeoTrellisService.scala
   :snippet: AnalyzeRoute
 
-First notice that we are using a URL parameter ``cutoff`` to determine where we will start the mask. The ``parameter`` directive requires a function that will receive the `parameters`__. It allows us to server requests with following URL:
+First notice that we are using a URL parameter ``cutoff`` to determine where we will start the mask. The ``parameter`` directive requires a function that will receive the `parameters`__. It allows us to serve requests with following URL:
 
 __ http://spray.io/documentation/1.2.0/spray-routing/parameter-directives/parameters/#parameters
 
